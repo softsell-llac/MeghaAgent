@@ -18,8 +18,6 @@ from threading import Thread
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
 
-
-
 app = Flask(__name__, static_url_path='/media', static_folder='path_to_media_folder')
 @app.route('/media')
 def media():
