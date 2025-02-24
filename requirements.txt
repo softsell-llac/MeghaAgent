@@ -2,6 +2,6 @@ Flask==1.1.1
 Flask-Sockets==0.2.1
 gevent==22.10.1
 gevent-websocket==0.10.1
-greenlet==2.0.2
+greenlet==1.1.3   # Change this to a version compatible with gevent
 google-cloud-speech
-gunicorn==20.1.0            # Add gunicorn for deploying the app
+gunicorn==20.1.0
