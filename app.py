@@ -7,6 +7,7 @@ import signal
 import logging
 import threading
 import time
+import os
 
 from google.cloud import speech_v1p1beta1 as speech
 from flask import Flask, request
@@ -61,6 +62,9 @@ class Stream(object):
 
 @sockets.route('/media')
 def media(ws):
+    if not ws:
+        app.logger.error("WebSocket connection failed: handshake not established")
+        return
     app.logger.info("WebSocket connection established")
     stream = Stream(RATE, CHUNK)
 
@@ -80,6 +84,7 @@ def media(ws):
         if data['event'] == 'stop':
             app.logger.info("WebSocket connection closing")
             break
+
 
 
 def stream_transcript(ws, stream):
@@ -126,6 +131,7 @@ if __name__ == '__main__':
         config=config, interim_results=True
     )
 
-    server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
-    app.logger.info("Server started on ws://localhost:5000/media")
-    server.serve_forever()
+    port = int(os.environ.get('PORT', 5000))  # Default to 5000 if PORT isn't set
+server = pywsgi.WSGIServer(('', port), app, handler_class=WebSocketHandler)
+app.logger.info("Server started on ws://localhost:5000/media")
+server.serve_forever()
