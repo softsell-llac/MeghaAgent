@@ -1,14 +1,9 @@
 import io
-import re
-import sys
 import base64
 import json
-import signal
 import logging
 import threading
-import time
 import os
-
 from google.cloud import speech_v1p1beta1 as speech
 from flask import Flask, request
 from flask_sockets import Sockets
@@ -19,11 +14,7 @@ from geventwebsocket.handler import WebSocketHandler
 app = Flask(__name__)
 sockets = Sockets(app)
 
-@app.route('/media', methods=['GET'])
-def media_http():
-    app.logger.info("HTTP request received for /media")
-    return "Media endpoint is live", 200
-
+# Stream class to handle audio chunks
 class Stream(object):
     def __init__(self, rate, chunk):
         self._rate = rate
@@ -60,6 +51,7 @@ class Stream(object):
 
             yield b"".join(data)
 
+# WebSocket route for media streaming
 @sockets.route('/media')
 def media(ws):
     app.logger.info("WebSocket connection established")
@@ -82,7 +74,7 @@ def media(ws):
             app.logger.info("WebSocket connection closing")
             break
 
-
+# Transcribes audio and sends responses
 def stream_transcript(ws, stream):
     audio_generator = stream.generator()
     requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in audio_generator)
@@ -100,7 +92,7 @@ def stream_transcript(ws, stream):
                     'message': response_message
                 }))
 
-
+# Scripted response generator
 def get_scripted_response(transcription):
     transcription = transcription.lower()
     if "hello" in transcription:
@@ -127,7 +119,9 @@ if __name__ == '__main__':
         config=config, interim_results=True
     )
 
-    port = int(os.environ.get('PORT', 5000))  # Default to 5000 if PORT isn't set
+    # Use the environment-provided port or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+
     server = pywsgi.WSGIServer(('', port), app, handler_class=WebSocketHandler)
     app.logger.info(f"Server started on ws://localhost:{port}/media")
     server.serve_forever()
