@@ -9,7 +9,7 @@ import threading
 import time
 
 from google.cloud import speech_v1p1beta1 as speech
-from flask import Flask
+from flask import Flask, request
 from flask_sockets import Sockets
 from six.moves import queue
 from gevent import pywsgi
@@ -17,6 +17,11 @@ from geventwebsocket.handler import WebSocketHandler
 
 app = Flask(__name__)
 sockets = Sockets(app)
+
+@app.route('/media', methods=['GET'])
+def media_http():
+    app.logger.info("HTTP request received for /media")
+    return "Media endpoint is live", 200
 
 class Stream(object):
     def __init__(self, rate, chunk):
