@@ -134,47 +134,58 @@ class Stream(object):
             yield b"".join(data)
 
 #This is the core of the voicebot — WebSocket connection between Exotel and your app.
+# @sockets.route('/media')
+# def echo(ws):
+#     app.logger.info("Connection accepted")
+#     # A lot of messages will be sent rapidly. We'll stop showing after the first one.
+#     has_seen_media = False
+#     message_count = 0
+#     while not ws.closed:
+#         message = ws.receive()
+#         if message is None:
+#             app.logger.info("No message received...")
+#             continue
+
+#         # Messages are a JSON encoded string
+#         data = json.loads(message)
+
+#         # Using the event type you can determine what type of message you are receiving
+#         if data['event'] == "connected":
+#             app.logger.info("Connected Message received: {}".format(message))
+#         if data['event'] == "start":
+#             app.logger.info("Start Message received: {}".format(message))
+#         if data['event'] == "media":
+#             payload = data['media']['payload']
+#             chunk = base64.b64decode(payload)# Decodes base64 audio data
+#             stream.fill_buffer(chunk)# Adds audio chunk to the buffer
+#             if not has_seen_media and args.stream_type == "bidirectional":
+#                 t2 = threading.Thread(target=stream_playback, args=(ws, data['stream_sid']))
+#                 t2.daemon = True
+#                 t2.start()
+#                 app.logger.info("Media message: {}".format(message))
+#                 app.logger.info("Payload is: {}".format(payload))
+#                 app.logger.info("That's {} bytes".format(len(chunk)))
+#                 app.logger.info("Additional media messages from WebSocket are being suppressed....")
+#                 has_seen_media = True
+#         if data['event'] == "mark":
+#             app.logger.info("Mark Message received: {}".format(message))
+#         if data['event'] == "stop":
+#             app.logger.info("Stop Message received: {}".format(message))
+#             break
+#         message_count += 1
+
+#     app.logger.info("Connection closed. Received a total of {} messages".format(message_count))
 @sockets.route('/media')
-def echo(ws):
-    app.logger.info("Connection accepted")
-    # A lot of messages will be sent rapidly. We'll stop showing after the first one.
-    has_seen_media = False
-    message_count = 0
+def media(ws):
+    if not ws:
+        app.logger.error("WebSocket handshake failed")
+        return
+    app.logger.info("WebSocket connection established")
     while not ws.closed:
         message = ws.receive()
-        if message is None:
-            app.logger.info("No message received...")
-            continue
-
-        # Messages are a JSON encoded string
-        data = json.loads(message)
-
-        # Using the event type you can determine what type of message you are receiving
-        if data['event'] == "connected":
-            app.logger.info("Connected Message received: {}".format(message))
-        if data['event'] == "start":
-            app.logger.info("Start Message received: {}".format(message))
-        if data['event'] == "media":
-            payload = data['media']['payload']
-            chunk = base64.b64decode(payload)# Decodes base64 audio data
-            stream.fill_buffer(chunk)# Adds audio chunk to the buffer
-            if not has_seen_media and args.stream_type == "bidirectional":
-                t2 = threading.Thread(target=stream_playback, args=(ws, data['stream_sid']))
-                t2.daemon = True
-                t2.start()
-                app.logger.info("Media message: {}".format(message))
-                app.logger.info("Payload is: {}".format(payload))
-                app.logger.info("That's {} bytes".format(len(chunk)))
-                app.logger.info("Additional media messages from WebSocket are being suppressed....")
-                has_seen_media = True
-        if data['event'] == "mark":
-            app.logger.info("Mark Message received: {}".format(message))
-        if data['event'] == "stop":
-            app.logger.info("Stop Message received: {}".format(message))
-            break
-        message_count += 1
-
-    app.logger.info("Connection closed. Received a total of {} messages".format(message_count))
+        if message:
+            app.logger.info(f"Received: {message}")
+            ws.send(f"Echo: {message}")
 
 # Google Cloud Speech-to-Text streaming
 def stream_transcript():
